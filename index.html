@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpendSmart Analytics - Personal Finance Mini Project</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
+        <i data-lucide="wallet" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+          SpendSmart Analytics
+        </h1>
+        <p class="text-xs text-slate-400">Track your finances with ease/p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="resetDemoData()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reset Demo
+      </button>
+      <button onclick="exportCSV()" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition shadow-md shadow-indigo-600/20">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="max-w-7xl mx-auto px-6 mt-8">
+    
+    <!-- Top Financial Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm">Net Balance</span>
+          <i data-lucide="wallet" class="w-5 h-5 text-indigo-400"></i>
+        </div>
+        <div id="netBalance" class="text-3xl font-extrabold text-white">₹0</div>
+      </div>
+
+      <div class="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm">Total Income</span>
+          <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div id="totalIncome" class="text-3xl font-extrabold text-emerald-400">₹0</div>
+      </div>
+
+      <div class="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm">Total Expenses</span>
+          <i data-lucide="trending-down" class="w-5 h-5 text-rose-400"></i>
+        </div>
+        <div id="totalExpense" class="text-3xl font-extrabold text-rose-400">₹0</div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Form + Chart & Logs -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Add Form -->
+      <div class="bg-slate-800/60 border border-slate-700/50 p-6 rounded-2xl h-fit">
+        <h3 class="text-base font-semibold text-slate-200 mb-4 flex items-center gap-2">
+          <i data-lucide="plus" class="w-4 h-4 text-indigo-400"></i> Add Transaction
+        </h3>
+        <form id="transForm" onsubmit="handleAddTransaction(event)" class="space-y-4">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Title</label>
+            <input id="transTitle" type="text" placeholder="e.g. Swiggy Order" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Amount (₹)</label>
+              <input id="transAmount" type="number" placeholder="500" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Type</label>
+              <select id="transType" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Category</label>
+            <select id="transCategory" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="Food & Dining">Food & Dining</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Entertainment">Entertainment</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Date</label>
+            <input id="transDate" type="date" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required />
+          </div>
+
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-sm transition shadow-md shadow-indigo-600/20">
+            Save Transaction
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Column: Visual Analytics & Logs -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Doughnut Analytics Chart -->
+        <div class="bg-slate-800/60 border border-slate-700/50 p-6 rounded-2xl">
+          <h3 class="text-base font-semibold text-slate-200 mb-4">Expense Distribution</h3>
+          <div class="w-full h-64 flex justify-center items-center">
+            <canvas id="expenseChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Transaction Logs -->
+        <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden p-6">
+          <h3 class="text-base font-semibold text-slate-200 mb-4">Recent Transactions</h3>
+          <div id="transactionList" class="divide-y divide-slate-700/50">
+            <!-- Dynamic Logs injected here -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const SAMPLE_TRANSACTIONS = [
+      { id: '1', title: 'Grocery Shopping', amount: 1850, type: 'expense', category: 'Food & Dining', date: '2026-10-15' },
+      { id: '2', title: 'Monthly Stipend', amount: 15000, type: 'income', category: 'Income', date: '2026-10-01' },
+      { id: '3', title: 'Electricity Bill', amount: 1200, type: 'expense', category: 'Utilities', date: '2026-10-05' },
+      { id: '4', title: 'New Shoes', amount: 2400, type: 'expense', category: 'Shopping', date: '2026-10-18' },
+      { id: '5', title: 'Metro Recharge', amount: 500, type: 'expense', category: 'Transportation', date: '2026-10-12' }
+    ];
+
+    let transactions = JSON.parse(localStorage.getItem('no_node_transactions')) || SAMPLE_TRANSACTIONS;
+    let chartInstance = null;
+
+    // Set default date picker to today
+    document.getElementById('transDate').valueAsDate = new Date();
+
+    function renderApp() {
+      // Save data locally
+      localStorage.setItem('no_node_transactions', JSON.stringify(transactions));
+
+      // Calculate totals
+      let income = 0, expense = 0;
+      const categories = {
+        'Food & Dining': 0,
+        'Shopping': 0,
+        'Transportation': 0,
+        'Utilities': 0,
+        'Entertainment': 0
+      };
+
+      transactions.forEach(t => {
+        if (t.type === 'income') {
+          income += Number(t.amount);
+        } else {
+          expense += Number(t.amount);
+          if (categories[t.category] !== undefined) {
+            categories[t.category] += Number(t.amount);
+          }
+        }
+      });
+
+      // Update Top Summary Cards
+      document.getElementById('totalIncome').innerText = `₹${income.toLocaleString()}`;
+      document.getElementById('totalExpense').innerText = `₹${expense.toLocaleString()}`;
+      document.getElementById('netBalance').innerText = `₹${(income - expense).toLocaleString()}`;
+
+      // Update Transaction List UI
+      const listContainer = document.getElementById('transactionList');
+      if (transactions.length === 0) {
+        listContainer.innerHTML = '<p class="text-slate-500 text-sm py-4 text-center">No transactions added yet.</p>';
+      } else {
+        listContainer.innerHTML = transactions.map(t => `
+          <div class="py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2 rounded-lg ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                <i data-lucide="${t.type === 'income' ? 'trending-up' : 'trending-down'}" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="font-medium text-slate-200 text-sm">${t.title}</div>
+                <div class="text-xs text-slate-400">${t.category} • ${t.date}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-sm ${t.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}">
+                ${t.type === 'income' ? '+' : '-'}₹${t.amount}
+              </span>
+              <button onclick="deleteTransaction('${t.id}')" class="text-slate-500 hover:text-rose-400">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Re-initialize Lucide Icons
+      lucide.createIcons();
+
+      // Render Chart
+      renderChart(categories);
+    }
+
+    function renderChart(categoryData) {
+      const ctx = document.getElementById('expenseChart').getContext('2d');
+      
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(categoryData),
+          datasets: [{
+            data: Object.values(categoryData),
+            backgroundColor: ['#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    function handleAddTransaction(e) {
+      e.preventDefault();
+      const title = document.getElementById('transTitle').value;
+      const amount = document.getElementById('transAmount').value;
+      const type = document.getElementById('transType').value;
+      const category = document.getElementById('transCategory').value;
+      const date = document.getElementById('transDate').value;
+
+      const newItem = { id: Date.now().toString(), title, amount: parseFloat(amount), type, category, date };
+      transactions.unshift(newItem);
+      
+      document.getElementById('transTitle').value = '';
+      document.getElementById('transAmount').value = '';
+      
+      renderApp();
+    }
+
+    function deleteTransaction(id) {
+      transactions = transactions.filter(t => t.id !== id);
+      renderApp();
+    }
+
+    function resetDemoData() {
+      transactions = [...SAMPLE_TRANSACTIONS];
+      renderApp();
+    }
+
+    function exportCSV() {
+      const headers = ['ID,Title,Type,Amount,Category,Date\n'];
+      const rows = transactions.map(t => `${t.id},"${t.title}",${t.type},${t.amount},"${t.category}",${t.date}`);
+      const blob = new Blob([headers.concat(rows.join('\n')).join('')], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'financial_report.csv';
+      a.click();
+    }
+
+    // Initial Load
+    renderApp();
+  </script>
+</body>
+</html>
